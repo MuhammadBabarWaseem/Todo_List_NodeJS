@@ -7,13 +7,25 @@ app.get("/", (request, response) => {
 });
 
 app.get("/todos", (request, response) => {
+
+    const showPendingTodos = request.query.showpending;
+
     fs.readFile("./store/todo.json", "utf-8", (err, data) => {
         if (err) {
             return response.status(500).send("Sorry, something wnet wrong.");
         }
 
         const todos = JSON.parse(data);
-        return response.json({ todos: todos });
+
+        if (showPendingTodos !== "1") {
+            return response.json({ todos: todos });
+        } else {
+            return response.json({
+                todos: todos.filter((t) => {
+                    return t.complete === false;
+                }),
+            });
+        }
     });
 });
 
@@ -35,16 +47,16 @@ app.put("/todos/:id/complete", (request, response) => {
         }
 
         let todos = JSON.parse(data);
-        const todoIndex = findTodoById(todos, id)
+        const todoIndex = findTodoById(todos, id);
 
-        if(todoIndex === -1) {
-            return response.status(404).send('Sorry, Not Found.')
+        if (todoIndex === -1) {
+            return response.status(404).send("Sorry, Not Found.");
         }
-        todos[todoIndex].complete = true
+        todos[todoIndex].complete = true;
 
-        fs.writeFile('./store/todo.json', JSON.stringify(todos), () => {
-            return response.json({'status': 'ok'})
-        })
+        fs.writeFile("./store/todo.json", JSON.stringify(todos), () => {
+            return response.json({ status: "ok" });
+        });
     });
 });
 
