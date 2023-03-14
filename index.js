@@ -2,17 +2,19 @@ const express = require("express");
 const fs = require("fs");
 const app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.get("/", (request, response) => {
     return response.send("Hello World!");
 });
 
 app.get("/todos", (request, response) => {
-
     const showPendingTodos = request.query.showpending;
 
     fs.readFile("./store/todo.json", "utf-8", (err, data) => {
         if (err) {
-            return response.status(500).send("Sorry, something wnet wrong.");
+            return response.status(500).send("Sorry, something went wrong.");
         }
 
         const todos = JSON.parse(data);
@@ -43,7 +45,7 @@ app.put("/todos/:id/complete", (request, response) => {
 
     fs.readFile("./store/todo.json", "utf-8", (err, data) => {
         if (err) {
-            return response.status(500).send("Sorry, something wnet wrong.");
+            return response.status(500).send("Sorry, something went wrong.");
         }
 
         let todos = JSON.parse(data);
@@ -58,6 +60,33 @@ app.put("/todos/:id/complete", (request, response) => {
             return response.json({ status: "ok" });
         });
     });
+});
+
+app.post("/createTodo", (request, response) => {
+    if (!request.body.name) {
+        return response.status(400).send('Missing name')
+    }
+
+    fs.readFile("./store/todo.json", "utf-8", (err, data) => {
+        if (err) {
+            return response.status(500).send("Sorry, something went wrong.");
+        }
+
+        const todos = JSON.parse(data)
+        const maxId = Math.max.apply(Math, todos.map(t => { return t.id }))
+
+        todos.push({
+            id: maxId + 1,
+            name : request.body.name,
+            complete : false,
+        })
+
+        fs.writeFile("./store/todo.json", JSON.stringify(todos), () => {
+            return response.json({ status: "ok" });
+        });
+
+    })
+
 });
 
 app.listen(3000, () => {
